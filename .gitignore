@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# Notebook cache/output
+*.nbconvert.ipynb
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Mac/Linux hidden files
+.idea/

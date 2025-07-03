@@ -1,0 +1,15 @@
+# Always treat Jupyter Notebooks as text (for better diffs)
+*.ipynb text
+
+# Force LF line endings for all text files
+*.py text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.csv text eol=lf
+
+# Streamlit-specific formatting
+.streamlit/* text eol=lf
+
+# Handle notebooks properly
+*.ipynb filter=strip-notebook-output
