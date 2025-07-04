@@ -40,13 +40,18 @@ if folder_input:
                         st.markdown(f"- **{os.path.basename(nb['path'])}** (Last Modified: `{nb['modifiedTime']}`)")
 
                     if st.button("🧠 Evaluate Selected Student"):
-                        sub_dict = {selected_student: notebooks}
+                        sub_dict = {
+                            selected_student: {
+                            "notebooks": notebooks,
+                            "subfolder_count": subfolder_count
+                            }
+                        }
                         report = evaluate_student_notebooks(sub_dict)
                         st.dataframe(report, use_container_width=True)
 
-                        # Optional download
                         csv = report.to_csv(index=False).encode('utf-8')
                         st.download_button("⬇️ Download Report as CSV", csv, f"{selected_student}_report.csv", "text/csv")
+
 
         except Exception as e:
             st.error(f"❌ Error occurred: {e}")
