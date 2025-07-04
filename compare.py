@@ -6,23 +6,25 @@ import streamlit as st
 import re
 import os
 
-# ✅ Correct Gemini model name
+# ✅ Gemini model
 MODEL_NAME = "gemini-1.5-flash"
 
-# ✅ Load Gemini API key from Streamlit secrets
+# ✅ Load Gemini API key
 if "gemini" not in st.secrets or "api_key" not in st.secrets["gemini"]:
-    st.error("❌ 'api_key' under [gemini] not found in .streamlit/secrets.toml. Please add it.")
+    st.error("❌ 'api_key' under [gemini] not found in .streamlit/secrets.toml.")
     st.stop()
 
 api_key = st.secrets["gemini"]["api_key"]
 genai.configure(api_key=api_key)
 
-# ✅ Initialize model
+# ✅ Initialize Gemini model
 model = genai.GenerativeModel(model_name=MODEL_NAME)
 
-# Extract notebook content (code + markdown cells only)
+# ✅ Extract notebook content (code + markdown cells)
 def extract_notebook_content(nb_path):
     try:
+        if not os.path.exists(nb_path):
+            return f"Error: Notebook file not found → {nb_path}"
         with open(nb_path, 'r', encoding='utf-8') as f:
             nb = nbformat.read(f, as_version=4)
         content = "\n\n".join([
@@ -34,7 +36,7 @@ def extract_notebook_content(nb_path):
     except Exception as e:
         return f"Error reading notebook: {e}"
 
-# Rubric to instruct Gemini for evaluation
+# ✅ Evaluation rubric
 rubric = """
 You are a productivity evaluator. Given a student's Jupyter notebook, score it on the following:
 1. Completeness (0-10): Are required tasks/code cells implemented?
@@ -51,32 +53,30 @@ Respond only in JSON format like:
 }
 """
 
-# Evaluate a single notebook using Gemini
+# ✅ Evaluate a single notebook
 def get_productivity_scores(content):
     prompt = f"{rubric}\n\nNotebook Content:\n{content}\n"
     try:
         response = model.generate_content(prompt)
-        
-        # Use regex to extract the first JSON object from the response
         json_match = re.search(r'\{[\s\S]*?\}', response.text)
         if json_match:
-            scores = json.loads(json_match.group())
-        else:
-            scores = {"Completeness": 0, "Code Quality": 0, "Documentation": 0, "Insightfulness": 0, "error": "No valid JSON found"}
-        return scores
+            return json.loads(json_match.group())
+        return {"Completeness": 0, "Code Quality": 0, "Documentation": 0, "Insightfulness": 0, "error": "No valid JSON found"}
     except Exception as e:
         return {"Completeness": 0, "Code Quality": 0, "Documentation": 0, "Insightfulness": 0, "error": str(e)}
 
-# Evaluate multiple student notebooks and return a DataFrame
+# ✅ Evaluate all student notebooks
 def evaluate_student_notebooks(student_data):
     results = []
 
-    for student, notebooks in student_data.items():
+    for student, data in student_data.items():
+        notebooks = data.get("notebooks", [])
+        subfolder_count = data.get("subfolder_count", 0)
         num_notebooks = len(notebooks)
 
         for notebook in notebooks:
-            path = notebook["path"]
-            modified = notebook["modifiedTime"]
+            path = notebook.get("path", "")
+            modified = notebook.get("modifiedTime", "N/A")
 
             content = extract_notebook_content(path)
             scores = get_productivity_scores(content)
@@ -100,8 +100,7 @@ def evaluate_student_notebooks(student_data):
                 "Total Score (%)": percent,
                 "Notes": scores.get("error", ""),
                 "Notebook Count": num_notebooks,
-                "Total Subfolders": len(student_data)
+                "Total Subfolders": subfolder_count
             })
-
 
     return pd.DataFrame(results)
